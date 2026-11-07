@@ -49,7 +49,7 @@ targets:
         PRODUCT_NAME: AntiStrobo
         MARKETING_VERSION: 1.0.0
         # Dernier numéro de build envoyé à TestFlight (0 = aucun) : scripts/testflight.sh l'incrémente avant d'archiver.
-        CURRENT_PROJECT_VERSION: 0
+        CURRENT_PROJECT_VERSION: 1
         TARGETED_DEVICE_FAMILY: "1"
         # Icône de l'app : App/Assets.xcassets/AppIcon.appiconset (une seule image 1024×1024, sans alpha).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
