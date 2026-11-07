@@ -1,0 +1,97 @@
+# Projet XcodeGen de l'app « Anti-Strobo ».
+# Le .xcodeproj et l'Info.plist sont générés (ignorés par git) : `xcodegen generate`.
+# Toute la logique vit dans le package local Packages/StrobeCore.
+name: AntiStrobo
+
+options:
+  bundleIdPrefix: app.camantistrobo
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  # Langue de développement : CFBundleDevelopmentRegion = fr (l'app n'existe qu'en français).
+  developmentLanguage: fr
+
+packages:
+  StrobeCore:
+    path: Packages/StrobeCore
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: P55APCSVXL
+
+targets:
+  AntiStrobo:
+    type: application
+    platform: iOS
+    # Tout App/ est compilé récursivement ; les futurs fichiers (Camera, Processing, UI)
+    # n'ont rien à déclarer. DebugResources est branché à part (Debug uniquement).
+    sources:
+      - path: App
+        excludes:
+          - "DebugResources/**"
+      # Vidéos de test des arguments de lancement `-cleanSampleOnLaunch` / `-cleanHalfDutySampleOnLaunch`
+      # (AntiStroboApp.swift, aucun bouton à l'écran) : copiées dans l'app en Debug seulement
+      # (retirées en Release par EXCLUDED_SOURCE_FILE_NAMES ci-dessous). strobe-sample : éclairs d'une image ;
+      # strobe-half-duty : lampe à 5 Hz allumée la moitié du temps dans une pièce sombre (interpolation et
+      # débruitage), écrite par le test `writesSampleForCLI` (build/samples/).
+      - path: App/DebugResources/strobe-sample.mov
+        buildPhase: resources
+      - path: App/DebugResources/strobe-half-duty.mov
+        buildPhase: resources
+    dependencies:
+      - package: StrobeCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.camantistrobo.ios
+        PRODUCT_NAME: AntiStrobo
+        MARKETING_VERSION: 1.0.0
+        # Dernier numéro de build envoyé à TestFlight (0 = aucun) : scripts/testflight.sh l'incrémente avant d'archiver.
+        CURRENT_PROJECT_VERSION: 0
+        TARGETED_DEVICE_FAMILY: "1"
+        # Icône de l'app : App/Assets.xcassets/AppIcon.appiconset (une seule image 1024×1024, sans alpha).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Droits de l'app : calcul graphique (GPU) pendant la tâche de fond du nettoyage
+        # (BGContinuedProcessingTaskRequest.requiredResources = .gpu), pour l'interpolation et le débruitage.
+        CODE_SIGN_ENTITLEMENTS: Config/AntiStrobo.entitlements
+        # Le script « Commit dans l'Info.plist » lit le dépôt git et écrit dans le produit compilé.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        Release:
+          EXCLUDED_SOURCE_FILE_NAMES: strobe-sample.mov strobe-half-duty.mov
+    # Commit compilé, affiché à l'écran avec la version (App/UI/BuildLabel.swift) : on sait toujours quelle version
+    # tourne sur l'iPhone. « + » : des changements n'étaient pas encore enregistrés dans git. Après toutes les phases,
+    # avant la signature. L'Info.plist compilé est déclaré en entrée : sans cela, Xcode peut lancer le script avant
+    # d'écrire l'Info.plist, qui efface alors le commit (vu en Release).
+    postBuildScripts:
+      - name: Commit dans l'Info.plist
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        script: |
+          plist="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+          commit=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "?")
+          if ! git -C "${PROJECT_DIR}" diff --quiet HEAD 2>/dev/null; then commit="${commit}+"; fi
+          /usr/libexec/PlistBuddy -c "Delete :AntiStroboBuild" "$plist" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :AntiStroboBuild string ${commit}" "$plist"
+    # Info.plist généré à chaque `xcodegen generate` (pas de plist écrit à la main).
+    info:
+      path: build/AntiStrobo-Info.plist
+      properties:
+        CFBundleDisplayName: Anti-Strobo
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UIStatusBarHidden: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        BGTaskSchedulerPermittedIdentifiers:
+          - app.camantistrobo.ios.clean.*
+        NSCameraUsageDescription: Anti-Strobo filme le concert.
+        NSMicrophoneUsageDescription: Anti-Strobo enregistre le son du concert avec la vidéo.
+        NSPhotoLibraryAddUsageDescription: Anti-Strobo range la vidéo originale et la vidéo nettoyée dans ta pellicule.
