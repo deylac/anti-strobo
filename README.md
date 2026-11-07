@@ -48,7 +48,8 @@ open AntiStrobo.xcodeproj
 ```
 
 In `project.yml`, set `DEVELOPMENT_TEAM` to your own team and change `bundleIdPrefix` and `PRODUCT_BUNDLE_IDENTIFIER`,
-then run `xcodegen generate` again and run the app on your iPhone.
+then run `xcodegen generate` again and run the app on your iPhone. To upload with `scripts/testflight.sh`, also put your
+team, bundle identifier and App Store provisioning profile in `Config/ExportOptions-*.plist`.
 
 The app asks iOS for the GPU while it cleans a video in the background (`Config/AntiStrobo.entitlements`, *Background
 GPU Access* on the App ID). If your team cannot enable it, remove that entitlement: cleaning still works, more slowly

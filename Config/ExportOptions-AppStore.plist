@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!-- Options d'export de `xcodebuild -exportArchive` pour l'App Store (soumission à Apple, et TestFlight).
-     Utilisé par scripts/testflight.sh --app-store : l'export envoie directement le build à App Store Connect. -->
+     Utilisé par scripts/testflight.sh --app-store : l'export envoie directement le build à App Store Connect.
+     Signature manuelle, pour la même raison que dans ExportOptions-TestFlight-Internal.plist. -->
 <plist version="1.0">
 <dict>
 	<key>method</key>
@@ -13,7 +14,14 @@
 	<key>testFlightInternalTestingOnly</key>
 	<false/>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>app.camantistrobo.ios</key>
+		<string>Anti-Strobo App Store</string>
+	</dict>
 	<key>uploadSymbols</key>
 	<true/>
 	<key>manageAppVersionAndBuildNumber</key>
